@@ -1,0 +1,7 @@
+{
+    "POLICY-01-ROUTINE": "Routine claims under limit with no history require no approval.",
+    "POLICY-02-REVIEW": "Claims with recent history or moderate value require single manager approval.",
+    "POLICY-03-HIGH-RISK": "High value claims or extensive history require four-eyes executive approval.",
+    "POLICY-04-LIMITS": "Customers exceeding the maximum lifetime refund count (4) are declined.",
+    "POLICY-05-FRAUD": "Any account flagged for fraud is automatically declined."
+}

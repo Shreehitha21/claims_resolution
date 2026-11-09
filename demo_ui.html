@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claims Resolution Agent - Demo UI</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; }
+        .card { border: 1px solid #ddd; border-radius: 6px; padding: 20px; margin-bottom: 20px; background: #fafafa; }
+        .card h2 { margin-top: 0; font-size: 1.2rem; color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 5px; display: inline-block;}
+        label { display: block; margin: 10px 0 5px; font-weight: bold; font-size: 0.9rem;}
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #3498db; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.3s;}
+        button:hover { background-color: #2980b9; }
+        .response-box { background: #2c3e50; color: #1abc9c; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; margin-top: 15px; word-break: break-all; min-height: 20px;}
+        .flex-row { display: flex; gap: 15px; }
+        .flex-col { flex: 1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🛡️ Claims Resolution Agent</h1>
+    
+    <!-- STAGE 1: ASSESS -->
+    <div class="card">
+        <h2>1. Agent Assessment</h2>
+        <div class="flex-row">
+            <div class="flex-col">
+                <label>Claim ID</label><input type="text" id="claimId" value="C-1001">
+                <label>Customer ID</label><input type="text" id="custId" value="U-99">
+            </div>
+            <div class="flex-col">
+                <label>Amount ($)</label><input type="number" id="amount" value="600.0">
+                <label>Past Refunds (Count)</label><input type="number" id="refundCount" value="1">
+            </div>
+        </div>
+        <label>Fraud Flag</label>
+        <select id="fraudFlag"><option value="false">Clean (No Fraud)</option><option value="true">Flagged for Fraud</option></select>
+        
+        <button onclick="assessClaim()">Submit to Policy Engine</button>
+        <div id="assessResponse" class="response-box">Awaiting action...</div>
+    </div>
+
+    <!-- STAGE 2: APPROVE -->
+    <div class="card">
+        <h2>2. Human Approval</h2>
+        <label>Approver Identity</label>
+        <select id="approverId">
+            <option value="alice_mgr">Alice (Manager)</option>
+            <option value="bob_mgr">Bob (Manager)</option>
+            <option value="charlie_exec">Charlie (Executive)</option>
+        </select>
+        <button onclick="approveClaim()">Sign Approval</button>
+        <div id="approveResponse" class="response-box">Awaiting action...</div>
+    </div>
+
+    <!-- STAGE 3: EXECUTE -->
+    <div class="card">
+        <h2>3. Execute Refund</h2>
+        <label>Cryptographic Token</label>
+        <input type="text" id="execToken" placeholder="Paste JWT token here...">
+        <label>Idempotency Key (Prevents double billing)</label>
+        <input type="text" id="idemKey" value="idem-key-001">
+        <button onclick="executeRefund()">Execute Secure Refund</button>
+        <div id="execResponse" class="response-box">Awaiting action...</div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    async function assessClaim() {
+        const payload = {
+            claim: {
+                claim_id: document.getElementById('claimId').value,
+                customer_id: document.getElementById('custId').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                currency: "USD",
+                description: "Refund requested via UI"
+            },
+            ctx: {
+                refund_count: parseInt(document.getElementById('refundCount').value),
+                account_age_days: 365,
+                fraud_flag: document.getElementById('fraudFlag').value === "true"
+            }
+        };
+        await makeRequest('/claims/assess', 'agent_service', payload, 'assessResponse');
+    }
+
+    async function approveClaim() {
+        const payload = {
+            claim_id: document.getElementById('claimId').value,
+            approver_id: document.getElementById('approverId').value
+        };
+        const response = await makeRequest('/claims/approve', payload.approver_id, payload, 'approveResponse');
+        
+        // Auto-fill token if fully approved
+        if (response && response.token) {
+            document.getElementById('execToken').value = response.token;
+        }
+    }
+
+    async function executeRefund() {
+        const payload = {
+            claim_id: document.getElementById('claimId').value,
+            authorization_token: document.getElementById('execToken').value,
+            idempotency_key: document.getElementById('idemKey').value
+        };
+        await makeRequest('/claims/execute', 'agent_service', payload, 'execResponse');
+    }
+
+    async function makeRequest(endpoint, userId, payload, outputDiv) {
+        const out = document.getElementById(outputDiv);
+        out.innerText = "Processing...";
+        try {
+            const res = await fetch(API_BASE + endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            out.innerText = JSON.stringify(data, null, 2);
+            return data;
+        } catch (err) {
+            out.innerText = "Error: Cannot connect to server. Is FastAPI running?";
+        }
+    }
+</script>
+</body>
+</html>

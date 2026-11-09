@@ -1,0 +1,57 @@
+[
+  {
+    "test_id": "TC01",
+    "claim_id": "C-1001",
+    "amount": 50.0,
+    "customer_id": "U-001",
+    "refund_count": 0,
+    "fraud_flag": false,
+    "expected_tier": "TIER_ROUTINE",
+    "expected_clause": "POLICY-01-ROUTINE",
+    "idempotency_key": "idem_1001"
+  },
+  {
+    "test_id": "TC02",
+    "claim_id": "C-1002",
+    "amount": 150.0,
+    "customer_id": "U-002",
+    "refund_count": 1,
+    "fraud_flag": false,
+    "expected_tier": "TIER_SINGLE_APPROVAL",
+    "expected_clause": "POLICY-02-REVIEW",
+    "idempotency_key": "idem_1002"
+  },
+  {
+    "test_id": "TC03",
+    "claim_id": "C-1003",
+    "amount": 600.0,
+    "customer_id": "U-003",
+    "refund_count": 3,
+    "fraud_flag": false,
+    "expected_tier": "TIER_FOUR_EYES",
+    "expected_clause": "POLICY-03-HIGH-RISK",
+    "idempotency_key": "idem_1003"
+  },
+  {
+    "test_id": "TC04",
+    "claim_id": "C-1004",
+    "amount": 20.0,
+    "customer_id": "U-004",
+    "refund_count": 4,
+    "fraud_flag": false,
+    "expected_tier": "TIER_DECLINE",
+    "expected_clause": "POLICY-04-LIMITS",
+    "idempotency_key": "idem_1004"
+  },
+  {
+    "test_id": "TC05",
+    "claim_id": "C-1005",
+    "amount": 90.0,
+    "customer_id": "U-005",
+    "refund_count": 1,
+    "fraud_flag": true,
+    "expected_tier": "TIER_DECLINE",
+    "expected_clause": "POLICY-05-FRAUD",
+    "idempotency_key": "idem_1005"
+  }
+]
